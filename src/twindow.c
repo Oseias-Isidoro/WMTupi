@@ -1,5 +1,5 @@
 //
-// Created by oseias on 05/04/24.
+// Created by Oseias-Isidoro on 05/04/24.
 //
 
 #include <stdlib.h>
@@ -11,6 +11,7 @@
 #include "../include/util.h"
 #include "../include/twindow.h"
 
+#define SCREEN_TOP_BAR_HEIGHT 36
 #define WIN_TOP_BAR_HEIGHT 20
 
 TWindow* createTWindow(WMT* wmt, Window* win, int border_width)
@@ -33,6 +34,7 @@ TWindow* createTWindow(WMT* wmt, Window* win, int border_width)
 
     XSelectInput(wmt->display, win_frame,  SubstructureRedirectMask | SubstructureNotifyMask | EnterWindowMask | KeyPressMask);
 
+    tWindow->border_width = border_width;
     tWindow->frame = (Window*) win_frame;
     tWindow->window = win;
 
@@ -42,9 +44,15 @@ TWindow* createTWindow(WMT* wmt, Window* win, int border_width)
         XFree(sourceHints);
     }
 
-    resizeTWindow(wmt, tWindow, attribs.width, attribs.height, border_width);
+    maximizeTWindow(wmt, tWindow);
 
     return tWindow;
+}
+
+void maximizeTWindow(WMT* wmt, TWindow* tWin)
+{
+    moveTWindow(wmt, tWin, 0, SCREEN_TOP_BAR_HEIGHT);
+    resizeTWindow(wmt, tWin, wmt->screen->width, wmt->screen->height - SCREEN_TOP_BAR_HEIGHT, tWin->border_width);
 }
 
 void resizeTWindow(WMT* wmt, TWindow* tWin, int width, int height, int border_width)
