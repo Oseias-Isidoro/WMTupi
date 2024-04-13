@@ -7,7 +7,7 @@ INCS = -I${FREETYPEINC}
 all: copile install
 
 copile:
-	cc -g -o ./bin/tupi ./src/tupi.c ./src/util.c ./src/twindow.c ${LIBS} ${INCS}
+	cc -g -o ./bin/tupi ./src/tupi.c ./src/util.c ./src/twindow.c ./src/uiutil.c  ${LIBS} ${INCS}
 
 install:
 	cp -f ./bin/tupi /usr/bin
