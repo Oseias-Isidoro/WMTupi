@@ -1,0 +1,8 @@
+#!/bin/sh
+# See xserver bug: https://gitlab.freedesktop.org/xorg/xserver/-/issues/1289
+unset XDG_SEAT
+
+Xephyr -br -reset -screen 1920x1080 -ac :5 &
+sleep 1s
+export DISPLAY=:5
+valgrind --leak-check=yes ./../bin/tupi

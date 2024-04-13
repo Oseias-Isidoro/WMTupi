@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=WMtupi
+Comment=WMtupi Window Manager
+Exec=tupi
+Icon=tupi
+Type=XSession
