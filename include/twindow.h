@@ -15,6 +15,12 @@
 
     void     unmapTWindow(WMT* wmt, TWindow* tWin);
 
-    void maximizeTWindow(WMT* wmt, TWindow* tWin);
+    void     maximizeTWindow(WMT* wmt, TWindow* tWin);
+
+    void     centerTWindow(WMT* wmt, TWindow* tWin);
+
+    void     moveTWinToRight(WMT* wmt, TWindow* tWin);
+
+    void     moveTWinToLeft(WMT* wmt, TWindow* tWin);
 
 #endif //WMTUPI_TWINDOW_H
