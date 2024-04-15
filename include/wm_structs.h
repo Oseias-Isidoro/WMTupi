@@ -11,6 +11,8 @@
         int border_width;
         int width;
         int height;
+        int x;
+        int y;
     } TWindow;
 
     typedef struct {
