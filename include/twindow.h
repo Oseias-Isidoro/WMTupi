@@ -9,6 +9,8 @@
 
     void     resizeTWindow(WMT* wmt, TWindow* tWin, int width, int height, int border_width);
 
+    void     moveAndResizeTWindow(WMT* wmt, TWindow* tWin, int x, int y, int width, int height, int border_width);
+
     void     moveTWindow(WMT* wmt, TWindow* tWin, int x, int y);
 
     void     mapTWindow(WMT* wmt, TWindow* tWin);
@@ -22,5 +24,9 @@
     void     moveTWinToRight(WMT* wmt, TWindow* tWin);
 
     void     moveTWinToLeft(WMT* wmt, TWindow* tWin);
+
+    void     moveTWinToTop(WMT* wmt, TWindow* tWin);
+
+    void     moveTWinToDown(WMT* wmt, TWindow* tWin);
 
 #endif //WMTUPI_TWINDOW_H
