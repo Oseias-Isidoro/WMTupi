@@ -44,9 +44,16 @@ TWindow* createTWindow(WMT* wmt, Window* win, int border_width)
 
     XReparentWindow(wmt->display, (Window) tWindow->window, win_frame, border_width, WIN_TOP_BAR_HEIGHT + (border_width));
 
-    //maximizeTWindow(wmt, tWindow);
+    centerTWindow(wmt, tWindow);
 
     return tWindow;
+}
+
+void setInputFocusTWin(WMT* wmt, TWindow* tWin)
+{
+    XRaiseWindow(wmt->display, (Window) tWin->frame);
+    XRaiseWindow(wmt->display, (Window) tWin->window);
+    XSetInputFocus(wmt->display, (Window) tWin->window, RevertToPointerRoot, CurrentTime);
 }
 
 void maximizeTWindow(WMT* wmt, TWindow* tWin)
@@ -57,56 +64,73 @@ void maximizeTWindow(WMT* wmt, TWindow* tWin)
 
 void centerTWindow(WMT* wmt, TWindow* tWin)
 {
-    moveTWindow(
+    moveAndResizeTWindow(
         wmt,
         tWin,
         10,
-        10 + SCREEN_TOP_BAR_HEIGHT
-    );
-
-    resizeTWindow(
-        wmt,
-        tWin,
+        10 + SCREEN_TOP_BAR_HEIGHT,
         wmt->screen->width - 20,
         wmt->screen->height - (20 + SCREEN_TOP_BAR_HEIGHT),
         tWin->border_width
     );
 }
 
-void moveTWinToRight(WMT* wmt, TWindow* tWin)
+void moveTWinToDown(WMT* wmt, TWindow* tWin)
 {
-    moveTWindow(
+    moveAndResizeTWindow(
         wmt,
         tWin,
-        (wmt->screen->width /2) + 5,
-        SCREEN_TOP_BAR_HEIGHT+ 10
-    );
-
-    resizeTWindow(
-        wmt,
-        tWin,
-        (wmt->screen->width / 2) -15,
-        wmt->screen->height - (SCREEN_TOP_BAR_HEIGHT + 20),
+        tWin->x,
+        SCREEN_TOP_BAR_HEIGHT + ((wmt->screen->height / 2) - 10),
+        tWin->width,
+        (wmt->screen->height / 2) - (SCREEN_TOP_BAR_HEIGHT),
         tWin->border_width
-     );
+    );
 }
 
-void moveTWinToLeft(WMT* wmt, TWindow* tWin)
+void moveTWinToTop(WMT* wmt, TWindow* tWin)
 {
-    moveTWindow(
+    moveAndResizeTWindow(
         wmt,
         tWin,
-        10,
-        SCREEN_TOP_BAR_HEIGHT + 10
+        tWin->x,
+        SCREEN_TOP_BAR_HEIGHT + 10,
+        tWin->width,
+        (wmt->screen->height / 2) - (SCREEN_TOP_BAR_HEIGHT - 5),
+        tWin->border_width
     );
+}
 
-    resizeTWindow(
+void moveTWinToRight(WMT* wmt, TWindow* tWin)
+{
+    moveAndResizeTWindow(
         wmt,
         tWin,
+        (wmt->screen->width / 2) + 5,
+        SCREEN_TOP_BAR_HEIGHT + 10,
         (wmt->screen->width / 2) - 15,
         wmt->screen->height - (SCREEN_TOP_BAR_HEIGHT + 20),
         tWin->border_width
     );
+}
+
+void moveTWinToLeft(WMT* wmt, TWindow* tWin)
+{
+    moveAndResizeTWindow(
+        wmt,
+        tWin,
+        10,
+        SCREEN_TOP_BAR_HEIGHT + 10,
+        (wmt->screen->width / 2) - 15,
+        wmt->screen->height - (SCREEN_TOP_BAR_HEIGHT + 20),
+        tWin->border_width
+    );
+}
+
+void moveAndResizeTWindow(WMT* wmt, TWindow* tWin, int x, int y, int width, int height, int border_width)
+{
+    moveTWindow(wmt, tWin, x, y);
+    resizeTWindow(wmt, tWin, width, height, border_width);
 }
 
 void resizeTWindow(WMT* wmt, TWindow* tWin, int width, int height, int border_width)
@@ -121,6 +145,8 @@ void resizeTWindow(WMT* wmt, TWindow* tWin, int width, int height, int border_wi
 
 void moveTWindow(WMT* wmt, TWindow* tWin, int x, int y)
 {
+    tWin->x = x;
+    tWin->y = y;
     XMoveWindow(wmt->display, (Window) tWin->frame, x, y);
 }
 
