@@ -7,6 +7,8 @@
 
     TWindow* createTWindow(WMT* wmt, Window* win, int border_width);
 
+    void     setInputFocusTWin(WMT* wmt, TWindow* tWin);
+
     void     resizeTWindow(WMT* wmt, TWindow* tWin, int width, int height, int border_width);
 
     void     moveAndResizeTWindow(WMT* wmt, TWindow* tWin, int x, int y, int width, int height, int border_width);
