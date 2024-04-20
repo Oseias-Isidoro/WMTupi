@@ -1,3 +1,5 @@
 bin/tupi
 src/tupi.o
 src/lib/util.o
+.idea/
+.vscode/
