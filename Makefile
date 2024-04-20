@@ -4,9 +4,9 @@ LIBS = -lXft -lX11 -lXcursor -lXft -lfontconfig -lXcomposite
 FREETYPEINC = /usr/include/freetype2
 INCS = -I${FREETYPEINC}
 
-all: copile install
+all: compile install
 
-copile:
+compile:
 	cc -g -o ./bin/tupi ./src/tupi.c ./src/util.c ./src/twindow.c ./src/uiutil.c  ${LIBS} ${INCS}
 
 install:
@@ -14,4 +14,4 @@ install:
 	cp -f wmtupi.desktop /usr/share/applications
 	chmod 755 /usr/bin/tupi
 
-.PHONY: all copile install
+.PHONY: all compile install
