@@ -23,74 +23,27 @@
 
 WMT wmt;
 DynamicArray window_array;
-XColor red, brown, blue, yellow, green, purple, white, backgroud;
+XColor black, white, backgroud;
 int current_window = 0;
 
 int handle_x_error(Display* display, XErrorEvent* e);
 void drawTopBar(Display* display, Window win, GC gc, int width, int height, int screen, XFontStruct* font_info);
 
-void allocColors(Display* display) {
-    Colormap screen_colormap;     /* color map to use for allocating colors.   */
-
-    /* used for allocation of the given color    */
-    /* map entries.                              */
-    Status rc;                  /* return status of various Xlib functions.  */
-
-    /* get access to the screen's color map. */
-    screen_colormap = DefaultColormap(display, DefaultScreen(display));
-
-    /* allocate the set of colors we will want to use for the drawing. */
-    rc = XAllocNamedColor(display, screen_colormap, "red", &red, &red);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'red' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "brown", &brown, &brown);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'brown' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "blue", &blue, &blue);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'blue' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "yellow", &yellow, &yellow);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'yellow' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "black" /*"#5c00e6"*/, &purple, &purple);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'purple' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "green", &green, &green);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'green' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "white", &white, &white);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'white' color.\n");
-        exit(1);
-    }
-    rc = XAllocNamedColor(display, screen_colormap, "#9f9fdf", &backgroud, &backgroud);
-    if (rc == 0) {
-        fprintf(stderr, "XAllocNamedColor - failed to allocated 'background' color.\n");
-        exit(1);
-    }
+TWindow* currentTWindow()
+{
+    return &window_array.arr[current_window];
 }
 
+void allocColors(Display* display)
+{
+    allocColor(wmt.display, &white, "white");
+    allocColor(wmt.display, &black, "black");
+    allocColor(wmt.display, &backgroud, "#9f9fdf");
+}
 
 void tupi_init()
 {
-    wmt.display = XOpenDisplay(NULL);
-
-    if (wmt.display  == NULL) {
-        fprintf(stderr, ": cannot connect to X server \n");
-        exit(1);
-    }
+    wmt.display = getDisplay();
 
     wmt.screen = createTScreen(wmt.display);
     wmt.screen->gc = create_gc(wmt.display, wmt.screen->win_root, 0);
@@ -98,11 +51,10 @@ void tupi_init()
     wmt.run = 1;
 
     allocColors(wmt.display);
+
     XSync(wmt.display, 0);
     XSetWindowBackground(wmt.display, (Window) wmt.screen->win_root, backgroud.pixel);
     XClearWindow(wmt.display, (Window) wmt.screen->win_root);
-
-    XSelectInput(wmt.display, wmt.screen->win_root, SubstructureRedirectMask | SubstructureNotifyMask |  KeyPressMask | KeyReleaseMask);
 
     XFlush(wmt.display);
 
@@ -111,6 +63,8 @@ void tupi_init()
     XChangeWindowAttributes(wmt.display,wmt.screen->win_root, CWEventMask, &attributes);
 
     XSetErrorHandler(handle_x_error);
+
+    grab_input(&wmt, wmt.screen->win_root, MASTER_KEY, TERMINAL_OPEN_KEY);
 }
 
 void mapRequestEventHandler(XMapRequestEvent event)
@@ -167,21 +121,17 @@ void configureEventHandler(XConfigureRequestEvent event)
 
 void nextWindow()
 {
-    if (window_array.size) {
-        if (current_window == window_array.size - 1) {
-            current_window = 0;
-            mapTWindow(&wmt, &window_array.arr[current_window]);
-            XSetInputFocus(wmt.display, (Window) window_array.arr[current_window].window, RevertToPointerRoot, CurrentTime);
-        } else if (current_window < window_array.size - 1) {
-            current_window++;
-            mapTWindow(&wmt, &window_array.arr[current_window]);
-            XSetInputFocus(wmt.display, (Window) window_array.arr[current_window].window, RevertToPointerRoot, CurrentTime);
-        } else {
-            current_window = 0;
-            mapTWindow(&wmt, &window_array.arr[current_window]);
-            XSetInputFocus(wmt.display, (Window) window_array.arr[current_window].window, RevertToPointerRoot, CurrentTime);
-        }
+    if (!window_array.size) return;
+
+    if (current_window == window_array.size - 1) {
+        current_window = 0;
+    } else if (current_window < window_array.size - 1) {
+        current_window++;
+    } else {
+        current_window = 0;
     }
+
+    setInputFocusTWin(&wmt, currentTWindow());
 }
 
 void KeyPressHandler(XKeyEvent event)
@@ -191,27 +141,37 @@ void KeyPressHandler(XKeyEvent event)
         return;
     }
 
-    if(event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, TAB)) {
+    if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, TAB)) {
         nextWindow();
         return;
     }
 
+    if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, XK_Up)) {
+        moveTWinToTop(&wmt, currentTWindow());
+        return;
+    }
+
+    if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, XK_Down)) {
+        moveTWinToDown(&wmt, currentTWindow());
+        return;
+    }
+
     if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, XK_Left)) {
-        moveTWinToLeft(&wmt, &window_array.arr[current_window]);
+        moveTWinToLeft(&wmt, currentTWindow());
         return;
     }
 
     if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, XK_Right)) {
-        moveTWinToRight(&wmt, &window_array.arr[current_window]);
+        moveTWinToRight(&wmt, currentTWindow());
         return;
     }
 
     if (event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, XK_C)) {
-        centerTWindow(&wmt, &window_array.arr[current_window]);
+        centerTWindow(&wmt, currentTWindow());
     }
 
     if(event.state & MASTER_KEY && event.keycode == XKeysymToKeycode(wmt.display, MAXIMIZE_KEY)) {
-        maximizeTWindow(&wmt, &window_array.arr[current_window]);
+        maximizeTWindow(&wmt, currentTWindow());
         return;
     }
 
@@ -238,7 +198,7 @@ void enterNotifyHandler(XEnterWindowEvent event)
         TWindow tWin = window_array.arr[i];
         Window win = (Window) tWin.window;
         if (win == event.window) {
-            XSetInputFocus(wmt.display, win, RevertToPointerRoot, CurrentTime);
+            setInputFocusTWin(&wmt, &tWin);
             current_window = i;
             break;
         }
@@ -274,11 +234,21 @@ void tupi_run()
 }
 
 void* update_ui() {
-    while(1) {
-        usleep(1000000 );
+    while(wmt.run)
+    {
+        usleep(1000000);
         XFlush(wmt.display);
-        drawTopBar(wmt.display, wmt.screen->win_root, wmt.screen->gc, wmt.screen->width, 30, 0, wmt.screen->font_info);
+    
+        drawTopBar(
+            wmt.display, 
+            wmt.screen->win_root, 
+            wmt.screen->gc, 
+            wmt.screen->width, 
+            30, 
+            0, 
+            wmt.screen->font_info);
     }
+
     return NULL;
 }
 
@@ -306,10 +276,10 @@ void drawTopBar(Display* display, Window win, GC gc, int width, int height, int 
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
 
-    drawRectangle(display, win, gc, purple, (width / 2) - 150, 0, 300, SCREEN_TOP_BAR_HEIGHT, 1);
-    drawRectangle(display, win, gc, purple, (width / 2) - 160, 0, 320, 27, 1);
-    drawCircle(display, win, gc, purple, (width / 2) - 161, 12, 23, 1);
-    drawCircle(display, win, gc, purple, (width / 2) + 161 - 24, 12, 23, 1);
+    drawRectangle(display, win, gc, black, (width / 2) - 150, 0, 300, SCREEN_TOP_BAR_HEIGHT, 1);
+    drawRectangle(display, win, gc, black, (width / 2) - 160, 0, 320, 27, 1);
+    drawCircle(display, win, gc, black, (width / 2) - 161, 12, 23, 1);
+    drawCircle(display, win, gc, black, (width / 2) + 161 - 24, 12, 23, 1);
 
     int font_height = font_info->ascent + font_info->descent;
     char* text = asctime (timeinfo);
